@@ -260,6 +260,31 @@
             margin-top: 15px;
             text-align: center;
         }
+
+        .sync-btn {
+            background: #25d366;
+            margin-top: 12px;
+        }
+
+        .sync-btn:hover {
+            box-shadow: 0 10px 20px rgba(37, 211, 102, 0.3);
+        }
+
+        .sync-result {
+            margin-top: 12px;
+            font-size: 13px;
+            display: none;
+        }
+
+        .sync-result.show {
+            display: block;
+        }
+
+        .sync-result ul {
+            margin: 8px 0 0 18px;
+            padding: 0;
+            color: #721c24;
+        }
     </style>
 </head>
 <body>
@@ -308,6 +333,11 @@
             </div>
         </div>
 
+        <button type="button" id="syncBtn" class="sync-btn" style="display: none;">
+            🔗 Sincronizar com Sistema de Gruas
+        </button>
+        <div id="syncResult" class="sync-result"></div>
+
         <p class="info-text">
             💡 Nome do arquivo deve conter a cidade<br>
             Ex: <code>lajeado.txt</code>, <code>porto_alegre.txt</code>, <code>gravataí.txt</code>
@@ -322,6 +352,8 @@
         const processBtn = document.getElementById('processBtn');
         const alertBox = document.getElementById('alertBox');
         const summary = document.getElementById('summary');
+        const syncBtn = document.getElementById('syncBtn');
+        const syncResult = document.getElementById('syncResult');
 
         let selectedFiles = [];
 
@@ -407,7 +439,7 @@
             }
 
             // Carrega status final
-            loadStatus();
+            loadStatus(true);
             processBtn.style.display = 'none';
             fileInput.value = '';
             selectedFiles = [];
@@ -451,7 +483,7 @@
             alertBox.className = `alert show ${type}`;
         }
 
-        function loadStatus() {
+        function loadStatus(mostrarAlerta) {
             fetch('/api/status')
                 .then(r => r.json())
                 .then(data => {
@@ -462,14 +494,48 @@
                         document.getElementById('citiesList').textContent = data.cidades.join(', ');
                         document.getElementById('lastUpdate').textContent = data.ultima_atualizacao;
                         summary.classList.add('show');
-                        showAlert('✅ Todos os arquivos processados com sucesso!', 'success');
+                        syncBtn.style.display = 'block';
+                        if (mostrarAlerta) {
+                            showAlert('✅ Todos os arquivos processados com sucesso!', 'success');
+                        }
                     }
                 })
                 .catch(e => console.log('Status não disponível'));
         }
 
-        // Carrega status inicial
-        loadStatus();
+        syncBtn.addEventListener('click', async () => {
+            syncBtn.disabled = true;
+            syncBtn.innerHTML = '<span class="spinner"></span> Sincronizando...';
+            syncResult.classList.remove('show');
+
+            try {
+                const response = await fetch('/api/sincronizar', { method: 'POST' });
+                const data = await response.json();
+
+                if (response.ok) {
+                    let html = `✅ Sincronizado! ${data.criados} novo(s), ${data.atualizados} atualizado(s).`;
+                    if (data.erros && data.erros.length > 0) {
+                        html += `<br>⚠️ ${data.erros.length} não sincronizado(s):<ul>`;
+                        data.erros.forEach(e => {
+                            html += `<li>${e.registro.cidade} - Máquina ${e.registro.maquina}: ${e.motivo}</li>`;
+                        });
+                        html += '</ul>';
+                    }
+                    syncResult.innerHTML = html;
+                    syncResult.classList.add('show');
+                } else {
+                    showAlert(`❌ ${data.erro}`, 'error');
+                }
+            } catch (error) {
+                showAlert(`❌ Erro ao sincronizar: ${error.message}`, 'error');
+            } finally {
+                syncBtn.disabled = false;
+                syncBtn.innerHTML = '🔗 Sincronizar com Sistema de Gruas';
+            }
+        });
+
+        // Carrega status inicial (sem alerta de sucesso, é só carregar o que já existe)
+        loadStatus(false);
     </script>
 </body>
 </html>

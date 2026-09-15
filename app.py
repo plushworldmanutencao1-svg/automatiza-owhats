@@ -6,14 +6,18 @@ Processa conversas do WhatsApp e armazena automaticamente
 
 from flask import Flask, render_template, request, jsonify
 from werkzeug.utils import secure_filename
+from dotenv import load_dotenv
 import os
 import sys
+
+load_dotenv()
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 from parser import WhatsAppParser
 from formatter import DataFormatter
 from database import DatabaseManager
+from sync_gruas import sincronizar, GruasSyncError
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -75,6 +79,22 @@ def processar():
             'resumo': db.get_summary()
         })
 
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500
+
+@app.route('/api/sincronizar', methods=['POST'])
+def sincronizar_gruas():
+    """Envia os totais semanais consolidados pro sistema de gruas"""
+    try:
+        if not os.path.exists(db_path):
+            return jsonify({'erro': 'Nenhum dado para sincronizar ainda'}), 400
+
+        db = DatabaseManager(db_path)
+        resultado = sincronizar(db.get_dataframe())
+        return jsonify(resultado)
+
+    except GruasSyncError as e:
+        return jsonify({'erro': str(e)}), 400
     except Exception as e:
         return jsonify({'erro': str(e)}), 500
 
