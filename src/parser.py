@@ -110,13 +110,23 @@ class WhatsAppParser:
         # Remove espaços
         value = value.strip()
 
-        # Trata formato português (1.234,56 → 1234.56)
+        # Trata formato português
         if ',' in value and '.' in value:
-            # Formato: 1.234,56
+            # Formato: 1.234,56 → 1234.56
             value = value.replace('.', '').replace(',', '.')
         elif ',' in value:
-            # Formato: 1,5
+            # Formato: 1,5 → 1.5
             value = value.replace(',', '.')
+        elif '.' in value:
+            # Formato: 1.415 (ponto como separador de milhares) → 1415
+            # Verifica se é separador de milhares (3 dígitos após o ponto)
+            parts = value.split('.')
+            if len(parts) == 2 and len(parts[1]) == 3:
+                # É separador de milhares: 1.415 → 1415
+                value = value.replace('.', '')
+            # Se tem múltiplos pontos, remove todos
+            elif len(parts) > 2:
+                value = ''.join(parts)
 
         try:
             return float(value)
