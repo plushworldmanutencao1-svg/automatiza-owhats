@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automatização WhatsApp → Sistema de Gruas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="file"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 12px;
+            background: #f5f5f5;
+            border: 2px dashed #667eea;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            color: #667eea;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .file-input-label:hover {
+            background: #f0f0ff;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-name {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .status-box {
+            background: #f9f9f9;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .status-box.show {
+            display: block;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .status-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .status-label {
+            color: #666;
+            font-weight: 600;
+        }
+
+        .status-value {
+            color: #333;
+            font-weight: 700;
+        }
+
+        .success {
+            color: #4caf50;
+        }
+
+        .warning {
+            color: #ff9800;
+        }
+
+        .error {
+            color: #f44336;
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .download-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .download-btn {
+            background: #4caf50;
+        }
+
+        .download-btn:hover {
+            box-shadow: 0 10px 20px rgba(76, 175, 80, 0.3);
+        }
+
+        .info-text {
+            font-size: 12px;
+            color: #999;
+            margin-top: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Automatização WhatsApp</h1>
+            <p>Converta conversas do WhatsApp em dados estruturados</p>
+        </div>
+
+        <div id="alertBox" class="alert"></div>
+
+        <form id="uploadForm">
+            <div class="form-group">
+                <label for="arquivo">1️⃣ Selecione o arquivo TXT do WhatsApp</label>
+                <div class="file-input-wrapper">
+                    <label for="fileInput" class="file-input-label">
+                        📁 Clique para selecionar ou arraste aqui
+                    </label>
+                    <input type="file" id="fileInput" accept=".txt" required>
+                    <div class="file-name" id="fileName"></div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="cidade">2️⃣ Informe a cidade/local</label>
+                <input type="text" id="cidade" placeholder="Ex: Lajeado - RS, Gravataí, Porto Alegre" required>
+            </div>
+
+            <button type="submit" id="submitBtn">
+                ⚡ Processar Arquivo
+            </button>
+        </form>
+
+        <div id="statusBox" class="status-box">
+            <div class="status-item">
+                <span class="status-label">✅ Registros adicionados:</span>
+                <span class="status-value success" id="added">0</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">⚠️ Duplicatas evitadas:</span>
+                <span class="status-value warning" id="duplicated">0</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">📊 Total na planilha:</span>
+                <span class="status-value" id="total">0</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">🏙️ Cidades:</span>
+                <span class="status-value" id="cidades">-</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">🕐 Última atualização:</span>
+                <span class="status-value" id="updated">-</span>
+            </div>
+        </div>
+
+        <div class="download-section" id="downloadSection" style="display: none;">
+            <button type="button" class="download-btn" id="downloadBtn">
+                💾 Baixar Planilha Excel
+            </button>
+            <p class="info-text">Clique para baixar dados_consolidados.xlsx</p>
+        </div>
+
+        <p class="info-text" style="margin-top: 20px;">
+            📝 Envie quantos arquivos quiser. O sistema detecta automaticamente duplicatas e adiciona apenas dados novos.
+        </p>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const fileName = document.getElementById('fileName');
+        const uploadForm = document.getElementById('uploadForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const alertBox = document.getElementById('alertBox');
+        const statusBox = document.getElementById('statusBox');
+        const downloadSection = document.getElementById('downloadSection');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        // Drag and drop
+        document.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileInput.parentElement.style.background = '#f0f0ff';
+        });
+
+        document.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            fileInput.parentElement.style.background = '';
+        });
+
+        document.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileInput.parentElement.style.background = '';
+            const files = e.dataTransfer.files;
+            if (files.length) {
+                fileInput.files = files;
+                updateFileName();
+            }
+        });
+
+        fileInput.addEventListener('change', updateFileName);
+
+        function updateFileName() {
+            if (fileInput.files.length) {
+                fileName.textContent = `✅ ${fileInput.files[0].name}`;
+            } else {
+                fileName.textContent = '';
+            }
+        }
+
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const cidade = document.getElementById('cidade').value.trim();
+            if (!cidade) {
+                showAlert('Por favor, informe a cidade', 'error');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner"></span> Processando...';
+            alertBox.classList.remove('show');
+
+            const formData = new FormData();
+            formData.append('arquivo', fileInput.files[0]);
+            formData.append('cidade', cidade);
+
+            try {
+                const response = await fetch('/api/processar', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert(`✅ Sucesso! ${data.adicionados} registros adicionados`, 'success');
+                    updateStatus(data);
+                    uploadForm.reset();
+                    fileName.textContent = '';
+                    downloadSection.style.display = 'block';
+                } else {
+                    showAlert(`❌ Erro: ${data.erro}`, 'error');
+                }
+            } catch (error) {
+                showAlert(`❌ Erro ao processar: ${error.message}`, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '⚡ Processar Arquivo';
+            }
+        });
+
+        function showAlert(message, type) {
+            alertBox.textContent = message;
+            alertBox.className = `alert show ${type}`;
+        }
+
+        function updateStatus(data) {
+            document.getElementById('added').textContent = data.adicionados;
+            document.getElementById('duplicated').textContent = data.duplicados;
+            document.getElementById('total').textContent = data.total;
+            document.getElementById('cidades').textContent = data.resumo.cidades.join(', ');
+            document.getElementById('updated').textContent = data.resumo.ultima_atualizacao;
+            statusBox.classList.add('show');
+        }
+
+        downloadBtn.addEventListener('click', async () => {
+            try {
+                const response = await fetch('/api/download');
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'dados_consolidados.xlsx';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } else {
+                    showAlert('Erro ao baixar arquivo', 'error');
+                }
+            } catch (error) {
+                showAlert(`Erro: ${error.message}`, 'error');
+            }
+        });
+
+        // Carrega status inicial
+        async function loadStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                if (data.existe) {
+                    downloadSection.style.display = 'block';
+                    updateStatus({
+                        adicionados: 0,
+                        duplicados: 0,
+                        total: data.registros,
+                        resumo: {
+                            cidades: data.cidades,
+                            ultima_atualizacao: data.ultima_atualizacao
+                        }
+                    });
+                }
+            } catch (e) {
+                console.log('Nenhum dado anterior encontrado');
+            }
+        }
+
+        loadStatus();
+    </script>
+</body>
+</html>
