@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Automatização WhatsApp → Sistema de Gruas</title>
+    <title>WhatsApp → Banco de Dados</title>
     <style>
         * {
             margin: 0;
@@ -12,7 +12,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
@@ -25,7 +25,7 @@
             background: white;
             border-radius: 12px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 600px;
+            max-width: 800px;
             width: 100%;
             padding: 40px;
         }
@@ -38,74 +38,121 @@
         .header h1 {
             color: #333;
             font-size: 28px;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
 
         .header p {
             color: #666;
-            font-size: 14px;
+            font-size: 13px;
         }
 
-        .form-group {
+        .drop-zone {
+            border: 3px dashed #667eea;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9ff;
+            cursor: pointer;
+            transition: all 0.3s;
             margin-bottom: 20px;
         }
 
-        label {
-            display: block;
-            color: #333;
-            font-weight: 600;
-            margin-bottom: 8px;
-            font-size: 14px;
+        .drop-zone:hover {
+            background: #f0f0ff;
+            border-color: #764ba2;
         }
 
-        input[type="text"],
-        input[type="file"] {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 14px;
-            transition: border-color 0.3s;
+        .drop-zone.dragging {
+            background: #e8e8ff;
+            border-color: #764ba2;
+            transform: scale(1.02);
         }
 
-        input[type="text"]:focus,
-        input[type="file"]:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .file-input-wrapper {
-            position: relative;
-            overflow: hidden;
-            display: inline-block;
-            width: 100%;
-        }
-
-        .file-input-label {
-            display: block;
-            padding: 12px;
-            background: #f5f5f5;
-            border: 2px dashed #667eea;
-            border-radius: 6px;
-            cursor: pointer;
-            text-align: center;
+        .drop-zone-text {
+            font-size: 16px;
             color: #667eea;
             font-weight: 600;
-            transition: all 0.3s;
+            margin-bottom: 5px;
         }
 
-        .file-input-label:hover {
-            background: #f0f0ff;
+        .drop-zone-hint {
+            font-size: 12px;
+            color: #999;
         }
 
         input[type="file"] {
             display: none;
         }
 
-        .file-name {
-            margin-top: 8px;
+        .files-list {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .files-list.show {
+            display: block;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .file-item-icon {
+            width: 24px;
+            height: 24px;
+            background: #667eea;
+            color: white;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .file-item-info {
+            flex: 1;
+        }
+
+        .file-item-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .file-item-city {
             font-size: 12px;
             color: #999;
+            margin-top: 2px;
+        }
+
+        .file-item-status {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
         }
 
         button {
@@ -119,6 +166,7 @@
             font-weight: 600;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 20px;
         }
 
         button:hover:not(:disabled) {
@@ -131,50 +179,55 @@
             cursor: not-allowed;
         }
 
-        .status-box {
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .summary {
             background: #f9f9f9;
             border-left: 4px solid #667eea;
-            padding: 15px;
+            padding: 20px;
             border-radius: 6px;
-            margin-top: 20px;
+            margin-top: 30px;
             display: none;
         }
 
-        .status-box.show {
+        .summary.show {
             display: block;
         }
 
-        .status-item {
+        .summary-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
             font-size: 14px;
         }
 
-        .status-item:last-child {
+        .summary-row:last-child {
             margin-bottom: 0;
         }
 
-        .status-label {
+        .summary-label {
             color: #666;
             font-weight: 600;
         }
 
-        .status-value {
+        .summary-value {
             color: #333;
             font-weight: 700;
-        }
-
-        .success {
-            color: #4caf50;
-        }
-
-        .warning {
-            color: #ff9800;
-        }
-
-        .error {
-            color: #f44336;
         }
 
         .alert {
@@ -201,41 +254,10 @@
             border: 1px solid #f5c6cb;
         }
 
-        .spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: 8px;
-            vertical-align: middle;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .download-section {
-            margin-top: 30px;
-            padding-top: 30px;
-            border-top: 1px solid #e0e0e0;
-        }
-
-        .download-btn {
-            background: #4caf50;
-        }
-
-        .download-btn:hover {
-            box-shadow: 0 10px 20px rgba(76, 175, 80, 0.3);
-        }
-
         .info-text {
             font-size: 12px;
             color: #999;
-            margin-top: 10px;
+            margin-top: 15px;
             text-align: center;
         }
     </style>
@@ -243,126 +265,163 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🤖 Automatização WhatsApp</h1>
-            <p>Converta conversas do WhatsApp em dados estruturados</p>
+            <h1>📱 Importar WhatsApp</h1>
+            <p>Envie os arquivos .txt - cidade será identificada automaticamente do nome do arquivo</p>
         </div>
 
         <div id="alertBox" class="alert"></div>
 
-        <form id="uploadForm">
-            <div class="form-group">
-                <label for="arquivo">1️⃣ Selecione o arquivo TXT do WhatsApp</label>
-                <div class="file-input-wrapper">
-                    <label for="fileInput" class="file-input-label">
-                        📁 Clique para selecionar ou arraste aqui
-                    </label>
-                    <input type="file" id="fileInput" accept=".txt" required>
-                    <div class="file-name" id="fileName"></div>
-                </div>
-            </div>
+        <div class="drop-zone" id="dropZone">
+            <div class="drop-zone-text">📁 Arraste arquivos aqui ou clique</div>
+            <div class="drop-zone-hint">Suporta múltiplos arquivos .txt do WhatsApp</div>
+            <input type="file" id="fileInput" accept=".txt" multiple>
+        </div>
 
-            <div class="form-group">
-                <label for="cidade">2️⃣ Informe a cidade/local</label>
-                <input type="text" id="cidade" placeholder="Ex: Lajeado - RS, Gravataí, Porto Alegre" required>
-            </div>
+        <div class="files-list" id="filesList">
+            <div id="filesContainer"></div>
+        </div>
 
-            <button type="submit" id="submitBtn">
-                ⚡ Processar Arquivo
-            </button>
-        </form>
+        <button id="processBtn" style="display: none;">
+            ⚡ Processar Arquivos
+        </button>
 
-        <div id="statusBox" class="status-box">
-            <div class="status-item">
-                <span class="status-label">✅ Registros adicionados:</span>
-                <span class="status-value success" id="added">0</span>
+        <div class="summary" id="summary">
+            <div class="summary-row">
+                <span class="summary-label">✅ Total adicionado:</span>
+                <span class="summary-value" id="totalAdded">0</span>
             </div>
-            <div class="status-item">
-                <span class="status-label">⚠️ Duplicatas evitadas:</span>
-                <span class="status-value warning" id="duplicated">0</span>
+            <div class="summary-row">
+                <span class="summary-label">⚠️ Duplicatas evitadas:</span>
+                <span class="summary-value" id="totalDuplicated">0</span>
             </div>
-            <div class="status-item">
-                <span class="status-label">📊 Total na planilha:</span>
-                <span class="status-value" id="total">0</span>
+            <div class="summary-row">
+                <span class="summary-label">📊 Total no banco:</span>
+                <span class="summary-value" id="totalRecords">0</span>
             </div>
-            <div class="status-item">
-                <span class="status-label">🏙️ Cidades:</span>
-                <span class="status-value" id="cidades">-</span>
+            <div class="summary-row">
+                <span class="summary-label">🏙️ Cidades:</span>
+                <span class="summary-value" id="citiesList">-</span>
             </div>
-            <div class="status-item">
-                <span class="status-label">🕐 Última atualização:</span>
-                <span class="status-value" id="updated">-</span>
+            <div class="summary-row">
+                <span class="summary-label">🕐 Última atualização:</span>
+                <span class="summary-value" id="lastUpdate">-</span>
             </div>
         </div>
 
-        <div class="download-section" id="downloadSection" style="display: none;">
-            <button type="button" class="download-btn" id="downloadBtn">
-                💾 Baixar Planilha Excel
-            </button>
-            <p class="info-text">Clique para baixar dados_consolidados.xlsx</p>
-        </div>
-
-        <p class="info-text" style="margin-top: 20px;">
-            📝 Envie quantos arquivos quiser. O sistema detecta automaticamente duplicatas e adiciona apenas dados novos.
+        <p class="info-text">
+            💡 Nome do arquivo deve conter a cidade<br>
+            Ex: <code>lajeado.txt</code>, <code>porto_alegre.txt</code>, <code>gravataí.txt</code>
         </p>
     </div>
 
     <script>
+        const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
-        const fileName = document.getElementById('fileName');
-        const uploadForm = document.getElementById('uploadForm');
-        const submitBtn = document.getElementById('submitBtn');
+        const filesList = document.getElementById('filesList');
+        const filesContainer = document.getElementById('filesContainer');
+        const processBtn = document.getElementById('processBtn');
         const alertBox = document.getElementById('alertBox');
-        const statusBox = document.getElementById('statusBox');
-        const downloadSection = document.getElementById('downloadSection');
-        const downloadBtn = document.getElementById('downloadBtn');
+        const summary = document.getElementById('summary');
 
-        // Drag and drop
-        document.addEventListener('dragover', (e) => {
+        let selectedFiles = [];
+
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
-            fileInput.parentElement.style.background = '#f0f0ff';
+            dropZone.classList.add('dragging');
         });
 
-        document.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            fileInput.parentElement.style.background = '';
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragging');
         });
 
-        document.addEventListener('drop', (e) => {
+        dropZone.addEventListener('drop', (e) => {
             e.preventDefault();
-            fileInput.parentElement.style.background = '';
-            const files = e.dataTransfer.files;
-            if (files.length) {
-                fileInput.files = files;
-                updateFileName();
-            }
+            dropZone.classList.remove('dragging');
+            handleFiles(e.dataTransfer.files);
         });
 
-        fileInput.addEventListener('change', updateFileName);
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
 
-        function updateFileName() {
-            if (fileInput.files.length) {
-                fileName.textContent = `✅ ${fileInput.files[0].name}`;
-            } else {
-                fileName.textContent = '';
-            }
+        function extractCityFromFilename(filename) {
+            // Remove extensão
+            let name = filename.replace(/\.[^/.]+$/, '');
+            // Converte underscore e hífen para espaço
+            name = name.replace(/[_-]/g, ' ');
+            // Capitaliza primeira letra
+            name = name.charAt(0).toUpperCase() + name.slice(1);
+            return name;
         }
 
-        uploadForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
+        function handleFiles(files) {
+            selectedFiles = Array.from(files).filter(f => f.name.endsWith('.txt'));
 
-            const cidade = document.getElementById('cidade').value.trim();
-            if (!cidade) {
-                showAlert('Por favor, informe a cidade', 'error');
+            if (selectedFiles.length === 0) {
+                showAlert('Selecione apenas arquivos .txt', 'error');
                 return;
             }
 
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner"></span> Processando...';
+            renderFiles();
+            filesList.classList.add('show');
+            processBtn.style.display = 'block';
+        }
+
+        function renderFiles() {
+            filesContainer.innerHTML = '';
+            selectedFiles.forEach((file, index) => {
+                const city = extractCityFromFilename(file.name);
+                const item = document.createElement('div');
+                item.className = 'file-item';
+                item.innerHTML = `
+                    <div class="file-item-icon">${index + 1}</div>
+                    <div class="file-item-info">
+                        <div class="file-item-name">${file.name}</div>
+                        <div class="file-item-city">📍 ${city}</div>
+                    </div>
+                    <div class="file-item-status status-pending">⏳ Pendente</div>
+                `;
+                item.id = `file-${index}`;
+                filesContainer.appendChild(item);
+            });
+        }
+
+        processBtn.addEventListener('click', processFiles);
+
+        async function processFiles() {
+            if (selectedFiles.length === 0) return;
+
+            processBtn.disabled = true;
+            processBtn.innerHTML = '<span class="spinner"></span> Processando...';
             alertBox.classList.remove('show');
 
+            let totalAdded = 0;
+            let totalDuplicated = 0;
+
+            for (let i = 0; i < selectedFiles.length; i++) {
+                const file = selectedFiles[i];
+                const city = extractCityFromFilename(file.name);
+                await processFile(file, city, i, totalAdded, totalDuplicated);
+            }
+
+            // Carrega status final
+            loadStatus();
+            processBtn.style.display = 'none';
+            fileInput.value = '';
+            selectedFiles = [];
+            filesContainer.innerHTML = '';
+            filesList.classList.remove('show');
+        }
+
+        async function processFile(file, city, index, totalAdded, totalDuplicated) {
+            const fileItem = document.getElementById(`file-${index}`);
+            const statusEl = fileItem.querySelector('.file-item-status');
+
             const formData = new FormData();
-            formData.append('arquivo', fileInput.files[0]);
-            formData.append('cidade', cidade);
+            formData.append('arquivo', file);
+            formData.append('cidade', city);
 
             try {
                 const response = await fetch('/api/processar', {
@@ -373,79 +432,43 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    showAlert(`✅ Sucesso! ${data.adicionados} registros adicionados`, 'success');
-                    updateStatus(data);
-                    uploadForm.reset();
-                    fileName.textContent = '';
-                    downloadSection.style.display = 'block';
+                    statusEl.className = 'file-item-status status-success';
+                    statusEl.textContent = `✅ +${data.adicionados}`;
+                    totalAdded += data.adicionados;
+                    totalDuplicated += data.duplicados;
                 } else {
-                    showAlert(`❌ Erro: ${data.erro}`, 'error');
+                    statusEl.className = 'file-item-status status-error';
+                    statusEl.textContent = '❌ Erro';
                 }
             } catch (error) {
-                showAlert(`❌ Erro ao processar: ${error.message}`, 'error');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '⚡ Processar Arquivo';
+                statusEl.className = 'file-item-status status-error';
+                statusEl.textContent = '❌ Erro';
             }
-        });
+        }
 
         function showAlert(message, type) {
             alertBox.textContent = message;
             alertBox.className = `alert show ${type}`;
         }
 
-        function updateStatus(data) {
-            document.getElementById('added').textContent = data.adicionados;
-            document.getElementById('duplicated').textContent = data.duplicados;
-            document.getElementById('total').textContent = data.total;
-            document.getElementById('cidades').textContent = data.resumo.cidades.join(', ');
-            document.getElementById('updated').textContent = data.resumo.ultima_atualizacao;
-            statusBox.classList.add('show');
+        function loadStatus() {
+            fetch('/api/status')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.existe) {
+                        document.getElementById('totalAdded').textContent = '0';
+                        document.getElementById('totalDuplicated').textContent = '0';
+                        document.getElementById('totalRecords').textContent = data.registros;
+                        document.getElementById('citiesList').textContent = data.cidades.join(', ');
+                        document.getElementById('lastUpdate').textContent = data.ultima_atualizacao;
+                        summary.classList.add('show');
+                        showAlert('✅ Todos os arquivos processados com sucesso!', 'success');
+                    }
+                })
+                .catch(e => console.log('Status não disponível'));
         }
-
-        downloadBtn.addEventListener('click', async () => {
-            try {
-                const response = await fetch('/api/download');
-                if (response.ok) {
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'dados_consolidados.xlsx';
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    document.body.removeChild(a);
-                } else {
-                    showAlert('Erro ao baixar arquivo', 'error');
-                }
-            } catch (error) {
-                showAlert(`Erro: ${error.message}`, 'error');
-            }
-        });
 
         // Carrega status inicial
-        async function loadStatus() {
-            try {
-                const response = await fetch('/api/status');
-                const data = await response.json();
-                if (data.existe) {
-                    downloadSection.style.display = 'block';
-                    updateStatus({
-                        adicionados: 0,
-                        duplicados: 0,
-                        total: data.registros,
-                        resumo: {
-                            cidades: data.cidades,
-                            ultima_atualizacao: data.ultima_atualizacao
-                        }
-                    });
-                }
-            } catch (e) {
-                console.log('Nenhum dado anterior encontrado');
-            }
-        }
-
         loadStatus();
     </script>
 </body>
