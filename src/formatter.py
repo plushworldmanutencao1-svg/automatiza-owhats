@@ -21,8 +21,6 @@ class DataFormatter:
         # Converte datas
         self.df['data'] = pd.to_datetime(self.df['data'], format='%d/%m/%Y')
 
-        # Calcula semana do mês
-        self.df['semana_mes'] = self.df['data'].dt.day // 7 + 1
 
         # Calcula a média: valor / pelúcias
         self.df['media'] = self.df.apply(
@@ -44,7 +42,6 @@ class DataFormatter:
         column_order = [
             'data',
             'cidade',
-            'semana_mes',
             'maquina',
             'pelucias',
             'valor',
